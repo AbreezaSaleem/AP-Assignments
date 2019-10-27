@@ -1,0 +1,39 @@
+--updateBody _ (Body (posx,posy) vel mass clr) = 
+--    Body (posx-100000000,posy) vel mass clr
+
+
+updateBody :: (Foldable f) => f Body -> Body -> Body
+updateBody otherBodies (Body (px, py) (vx, vy) mymass clr) = 
+    let ax = sum (fmap  (\(Body (posx,posy) _ mass _ ) -> (px-posx) *((6.67 * 10 ^^ (-11)*mass) / ((py-posy)+(px-posx))^3 )) otherBodies)
+        ay = sum (fmap  (\(Body (posx,posy) _ mass _ ) -> (py-posy) *((6.67 * 10 ^^ (-11)*mass) / ((py-posy)+(px-posx))^3 )) otherBodies)
+    in  (Body (px + vx + ax, py + vy + ay) (vx, vy) mymass clr)
+
+ | lengthQuad / findDistance center (getPos oneNode) >= 0.5 =
+                                                        Internal Double  (Internal Double oneNode) = 
+                                                     | otherwise = 
+                                                        let (x, y) = getPos oneNode
+                                                        in Internal Double --how do we update the new node for this?
+
+
+
+
+tick ::Double -> [Body] -> QT Body
+tick radius bodies = let myTree = makeQT (0, 0) radius getPos summarize bodies 
+                     in fmap (updateBody myTree) myTree
+
+
+5
+2.5E11
+0.000E00 0.0 0.0 0.000E00 4.97250E41  255 255 0
+5.790E10 0.0 0.0 2.395E10 8.25500E34  0 255 0
+1.082E11 0.0 0.0 1.750E10 1.21725E36  255 0 255
+1.496E11 0.0 0.0 1.490E10 1.49350E36  0 50 255
+2.279E11 0.0 0.0 1.205E10 1.60475E35  255 0 0
+
+
+ 120  650 0 0 3  0 0 255
+ 550  450 0 0 4  0 0 255
+-550 -450 0 0 5  0 0 255
+-550 -550 0 0 6  0 0 255
+-130 -900 0 0 7  0 0 255
+ 300 -800 0 0 8  0 0 255

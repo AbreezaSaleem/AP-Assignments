@@ -1,0 +1,63 @@
+type Coords = (Int,Int)
+type BoardElement = (Coords,Int)
+
+updateBoard :: [BoardElement] -> [BoardElement] -> [[BoardElement]]
+updateBoard _ [] = []
+updateBoard a (b:bs) = [b:a]:updateBoard a bs 
+
+
+
+toElements :: Board -> ([BoardElement],[Coords])
+toElements [] = ([], [])
+toElements (b:bs)
+	|pls b /= 0 = 
+		let 
+			column = elemIndex (pls b) b 
+			row = elemIndex b bs
+		in 
+			(((row, column), (pls b)):xs, ys)
+	|otherwise = 
+		let 
+			column = elemIndex (pls b) b 
+			row = elemIndex b bs
+		in 
+			(xs, (row, column):ys)
+	where (xs, ys) = toElements b:bs
+
+
+	callOneList :: Board -> Int -> ([BoardElement],[Coords])
+callOneList [] _ = ([], [])
+callOneList (l:ls) size = let row = size - length ls - 1
+						  in
+						  	let (be, co) = convertOneList l row
+						  	in (be:a, co:b) where (a, b) = callOneList ls size
+
+fromElements :: [BoardElement] -> Board
+fromElements bes = let sortedBoard = sortBy sortGT bes
+				   in  formBoard sortedBoard
+
+
+formList :: [Int] -> Board
+formList [] = []
+formList (x:xs) = let ((row, column), val) = x 
+				   in val:formList xs
+
+validVals :: [BoardElement] -> Coords -> [Int]
+validVals [] _ = []
+validVals b c = let 
+					allRowVals = getValues compareRow b c
+					allColVals = getValues compareColumn b c
+				in 
+					([1..5] \\ allRowVals) \\ allColVals
+sudokuElements :: [[BoardElement]] -> [Coords] -> [[BoardElement]]
+sudokuElements (b:bes) (e:empty)
+    | head bes == solvedBoardElements && empty == [] = 
+        [solvedBoardElements]
+    | validVals b e == [] = error "wrong answer! Go back :O"  
+    | otherwise =
+				let posibleValues = validVals b e
+				in
+					let updatedCell = listOfCoord posibleValues e  
+					in sudokuElements (updateBoard b updatedCell) empty 
+
+let filteredBoard =  filter (\ x -> (validVals x e) /= []) bes

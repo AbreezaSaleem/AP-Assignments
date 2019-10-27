@@ -1,0 +1,9 @@
+{
+    "maxRequestsPerSite": 5,  
+    "minFetchInterval": 1000,
+    "maxRequests": 3,      
+    "initialUrls": 
+    [            
+    	"https://www.google.com/"
+    ]
+}

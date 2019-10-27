@@ -1,0 +1,229 @@
+const parse5 = require('parse5')
+const fs = require('fs')
+const https = require('https')
+const http = require('http')
+const url = require('url')
+const Q = require('q')
+
+// Assignment 3: Web crawler
+// Deadline: Saturday 18 March at 9PM
+//
+// You will write a web crawler in this assignment. Make sure to not 
+// send out too many requests. It is best to try on local sites and with
+// a small limit on the number of requests. 
+// 
+// You will read the configuration from a file named 'config.json' in the 
+// same directory. Here is a sample config.json. Use promises to read this
+// file and JSON.parse to parse it. Do not add comments in config.json
+
+var fileName = 'config.json'
+var parser = new parse5.SAXParser()
+
+const readFile = file => new Promise( (resolve, reject) =>
+    fs.readFile(file, 'utf8', (err, data) => err ? reject(err) : resolve(data)))
+
+const readSite = link => new Promise ( (resolve, reject) => {
+	console.log('link is: ' + link)
+	if (link.split('/')[0] == 'http:')
+	{
+		console.log('http')
+		http.get(link, res => 
+		{
+			console.log('GOING TO READ ' + link)
+			siteInfo[link].requestCount++
+			res.pipe(parser)
+			console.log('READ')
+			resolve(res)
+		}).then( success => resolve(res), error => console.error(error) )
+	}
+	else
+	{
+		console.log('https')
+		https.get(link, res => 
+		{
+			console.log('GOING TO READ ' + link)
+			siteInfo[link].requestCount++
+			//res.pipe(parser)
+			console.log('READ')
+			resolve(res)
+		}).then( success => resolve(res), error => console.error(error) )
+	}
+	console.log('Rejecting')
+	//reject()
+})
+
+var siteInfo = {}
+var siteNames = []
+const fr = readFile(fileName).then(data =>
+{
+	obj = JSON.parse(data)
+	//console.log(obj)
+
+	siteInfo[obj.initialUrls[0]] = {requestCount: 0}
+	siteInfo[obj.initialUrls[1]] = {requestCount: 0}
+	siteNames.push(obj.initialUrls[0])
+	siteNames.push(obj.initialUrls[1])
+	//console.log('SITE INFO')
+	//console.log(siteInfo)
+}).catch(err => console.error(err))
+
+
+
+let outgoingLinks = []
+parser.on('startTag', (a, b) => 
+{
+	console.log(a)
+	console.log(b)
+	/*(if (a == 'a')
+	{
+		//a.href = b.
+		//console.log(url.parse(b[0].value).hostname)
+		outgoingLinks = outgoingLinks.concat(b)
+		console.log(b)
+	}
+	else if (b == 'a')
+		console.log(b)*/
+});
+
+
+const sitesParsed = (siteNames) =>
+	Promise.all(siteNames.map(oneSite =>
+		readSite(oneSite).then( res => res.pipe(parser)).then( () => console.log('SITE PARSED') ) ) ).catch(err => console.error('?'+err))
+
+
+fr.then( () => sitesParsed(siteNames) )
+
+
+/*fr.then( () => parseSites(siteNames) ).then( () => 
+	//answer.forEach(oneSite => {oneSite.pipe(parser)}).then( () => console.log(outgoingLinks))
+	Promise.all(answer.map(async oneSite => 
+	{
+		console.log('bleh')
+		try
+		{
+			await oneSite.pipe(parser)
+			console.log('NOW IM HERE?')		
+		}
+		catch (err)
+		{
+			err => console.error(err)
+		}
+	}))).then(() => console.log('outgoing ' + outgoingLinks))
+*/
+
+
+
+/*
+
+const siteParsed = link => new Promise( (resolve, reject) => { //UURRGGHHHHHHHHH
+	if (link.split('/')[0] == 'http:')
+	{
+		http.get(link, res => 
+		{
+			console.log('GOING TO READ ' + link)
+			siteInfo[link].requestCount++
+			res.pipe(parser)
+			console.log('READ')
+		})
+		resolve()
+	}
+	else
+	{
+		https.get(link, res => 
+		{
+			console.log('GOING TO READ ' + link)
+			siteInfo[link].requestCount++
+			res.pipe(parser)
+			console.log('READ')
+		})
+		resolve()
+	}
+	reject()
+})
+
+
+fr.then( () =>
+{
+	var p = Promise.resolve()
+	console.log(p) 
+
+	console.log(siteNames)
+    siteNames.forEach(oneSite =>
+    	p = p.then( () => siteParsed(oneSite)).catch(err => console.error(err)) )
+}).catch(err => console.error(err + '\n'))
+
+*/
+// Maintain a map of how many requests you have made to each site and the 
+// last promised Delay like this. This is just an example. You will not
+// hardcode values. Every time you make a request you will use a promise 
+// that resolves when the response ends and you chain another promise to
+// it that will resolve after a set amount of time and store it in this
+// map so further requests can be chained to this promised delay.
+
+
+
+
+
+
+// For each of the URLs in the initialURLs and afterwards when you find 
+// new URLs, you will separate the domain name, and if it is less than max 
+// requests for that site, attach the next request to the 'then' handler of 
+// promisedDelay and also attach a delay promise. Use the following delay 
+// function that returns a promise // so after the delay you let the next
+					   		  // promise be resolved...?
+
+
+
+
+
+
+const delay = msecs => new Promise(resolve => setTimeout(resolve, msecs)) //give resolve after secs
+
+// For fetching, write a promise based fetch function that uses http.get 
+// or https.get based on the URL. Once you get the response you will pipe 
+// it to parse5 (http://inikulin.github.io/parse5/classes/saxparser.html) 
+// and in the startTag handler of parser, you find if it is an "A" tag. If 
+// so, you take the "href" attribute. This is an outgoing URL. If it starts 
+// with "//" it means use http:// or https:// based on the current page's 
+// URL. If it starts with any alphabets followed by :// you discard it 
+// except when it is http or https. Finally, if it starts with "/" it is an 
+// absolute URL and it means to attach the whole http://domainname before 
+// it and in other cases, it is a relative URL and you attach 
+// http://domainname/currentpage/ before it.
+// 
+// At the end, you have to print a list of all domains encountered 
+// along with the number of distinct domains that have a page with a link to 
+// a page on this domain (incoming links from distinct  domains) and the 
+// number of distint domains linked to by this domain (outgoing links to 
+// distinct domains)
+// 
+// Here is one way to divide your work.
+//
+// Step 1: Read and parse config.json
+// Step 2: Download URLs listed in config.json
+// Step 3: Obey delay and limit per site and max URLs to fetch
+// Step 4: Extract outgoing links from webpages and add to request queue
+// Step 5: Maintain and print list of domains with counts
+
+/*
+parser.on('startTag', (a, b) => 
+{
+    console.log(a)
+    console.log(b)
+    if (a == 'a')
+    {
+        console.log(a)
+        //a.href = b.
+        console.log(url.parse(b[0].value).hostname)
+    }
+    else if (b == 'a')
+        console.log(b)
+});
+
+
+http.get('http://google.com', res => 
+{
+   res.pipe(parser)
+});
+
+*/
